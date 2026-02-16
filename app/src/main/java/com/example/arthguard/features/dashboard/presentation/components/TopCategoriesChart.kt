@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import com.example.arthguard.features.dashboard.domain.model.DurationFilter
+import com.example.arthguard.features.dashboard.domain.model.ExpenseCategory
 import com.example.arthguard.features.dashboard.domain.model.ExpenseModel
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
@@ -50,9 +51,19 @@ private val barColors = listOf(
     Color(0xFFBA68C8), Color(0xFF4DB6AC), Color(0xFFFF8A65), Color(0xFFA1887F)
 )
 
+private fun ExpenseCategory.displayName(): String = when (this) {
+    ExpenseCategory.Food -> "Food"
+    ExpenseCategory.Travelling -> "Travel"
+    ExpenseCategory.Groceries -> "Groceries"
+    ExpenseCategory.Entertainment -> "Fun"
+    ExpenseCategory.Shopping -> "Shopping"
+    ExpenseCategory.Bills -> "Bills"
+    ExpenseCategory.Other -> "Other"
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopReceiversChart(
+fun TopCategoriesChart(
     expenses: List<ExpenseModel>,
     selectedDuration: DurationFilter,
     onDurationChange: (DurationFilter) -> Unit,
@@ -65,23 +76,20 @@ fun TopReceiversChart(
         expenses.filter { (it.time ?: 0) >= startTime }
     }
 
-    val receiverTotals = remember(filteredExpenses) {
+    val categoryTotals = remember(filteredExpenses) {
         filteredExpenses
-            .filter { !it.receiver.isNullOrBlank() }
-            .groupBy { it.receiver!! }
+            .groupBy { it.category }
             .mapValues { entry -> entry.value.sumOf { it.amount ?: 0.0 } }
             .entries.sortedByDescending { it.value }
     }
 
-    val labels = receiverTotals.map { it.key }
+    val labels = categoryTotals.mapNotNull { it.key?.displayName() }
     val modelProducer = remember { CartesianChartModelProducer() }
 
-    LaunchedEffect(receiverTotals) {
-        if (receiverTotals.isNotEmpty()) {
+    LaunchedEffect(categoryTotals) {
+        if (categoryTotals.isNotEmpty()) {
             modelProducer.runTransaction {
-                columnSeries {
-                    series(receiverTotals.map { it.value })
-                }
+                columnSeries { series(categoryTotals.map { it.value }) }
             }
         }
     }
@@ -93,7 +101,7 @@ fun TopReceiversChart(
                     value = selectedDuration.label,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Top Receivers") },
+                    label = { Text("Top Categories") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                     modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
                 )
@@ -108,36 +116,31 @@ fun TopReceiversChart(
             }
             Spacer(Modifier.height(16.dp))
 
-            if (receiverTotals.isNotEmpty()) {
-                val chartWidth = (receiverTotals.size * 100).coerceAtLeast(300)
+            if (categoryTotals.isNotEmpty()) {
+                val chartWidth = (categoryTotals.size * 100).coerceAtLeast(300)
                 Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                     CartesianChartHost(
                         chart = rememberCartesianChart(
                             rememberColumnCartesianLayer(
-                                columnProvider = remember(receiverTotals.size) {
+                                columnProvider = remember(categoryTotals.size) {
                                     object : ColumnCartesianLayer.ColumnProvider {
                                         override fun getColumn(
                                             entry: ColumnCartesianLayerModel.Entry,
                                             seriesIndex: Int,
                                             extraStore: ExtraStore
-                                        ): LineComponent {
-                                            val colorIndex = entry.x.toInt() % barColors.size
-                                            return LineComponent(
-                                                fill = Fill(barColors[colorIndex].toArgb()),
-                                                thicknessDp = Defaults.COLUMN_WIDTH
-                                            )
-                                        }
-                                        override fun getWidestSeriesColumn(seriesIndex: Int, extraStore: ExtraStore): LineComponent {
-                                            return LineComponent(Fill(barColors[0].toArgb()), Defaults.COLUMN_WIDTH)
-                                        }
+                                        ) = LineComponent(
+                                            fill = Fill(barColors[entry.x.toInt() % barColors.size].toArgb()),
+                                            thicknessDp = Defaults.COLUMN_WIDTH
+                                        )
+                                        override fun getWidestSeriesColumn(seriesIndex: Int, extraStore: ExtraStore) =
+                                            LineComponent(Fill(barColors[0].toArgb()), Defaults.COLUMN_WIDTH)
                                     }
                                 }
                             ),
                             startAxis = VerticalAxis.rememberStart(),
                             bottomAxis = HorizontalAxis.rememberBottom(
                                 valueFormatter = { _, x, _ ->
-                                    val name = labels.getOrNull(x.toInt()) ?: " "
-                                    if (name.length > 6) name.take(6) + "…" else name
+                                    labels.getOrNull(x.toInt()) ?: " "
                                 }
                             )
                         ),
@@ -146,7 +149,7 @@ fun TopReceiversChart(
                     )
                 }
             } else {
-                Text("No receiver data for ${selectedDuration.label.lowercase()}")
+                Text("No category data for ${selectedDuration.label.lowercase()}")
             }
         }
     }

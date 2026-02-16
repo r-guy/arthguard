@@ -4,12 +4,15 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.arthguard.features.dashboard.data.local.BudgetDao
+import com.example.arthguard.features.dashboard.data.local.BudgetEntity
 import com.example.arthguard.features.dashboard.data.local.ExpenseDao
 import com.example.arthguard.features.dashboard.data.local.ExpenseEntity
 
-@Database(entities = [ExpenseEntity::class], version = 3)
+@Database(entities = [ExpenseEntity::class, BudgetEntity::class], version = 4)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun expenseDao(): ExpenseDao
+    abstract fun budgetDao(): BudgetDao
 
     companion object {
         @Volatile
