@@ -12,5 +12,5 @@ sealed interface MainRoute {
     @Serializable
     data object Dashboard : MainRoute
     @Serializable
-    data object Profile : MainRoute
+    data object Settings : MainRoute
 }

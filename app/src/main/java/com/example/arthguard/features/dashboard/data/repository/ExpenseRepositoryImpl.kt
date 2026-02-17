@@ -5,6 +5,8 @@ import com.example.arthguard.features.dashboard.data.local.ExpenseDao
 import com.example.arthguard.features.dashboard.data.local.ExpenseEntity
 import com.example.arthguard.features.dashboard.domain.model.ExpenseCategory
 import com.example.arthguard.features.dashboard.domain.model.ExpenseModel
+import com.example.arthguard.features.dashboard.domain.model.TransactionSource
+import com.example.arthguard.features.dashboard.domain.model.TransactionType
 import com.example.arthguard.features.dashboard.domain.repository.ExpenseRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -29,7 +31,10 @@ class ExpenseRepositoryImpl(private val dao: ExpenseDao) : ExpenseRepository {
         time = time,
         category = category?.let { it::class.simpleName },
         receiver = receiver,
-        props = null
+        type = type,
+        source = source,
+        rawMessage = rawMessage,
+        sender = sender
     )
 
     private fun ExpenseEntity.toModel() = ExpenseModel(
@@ -38,7 +43,10 @@ class ExpenseRepositoryImpl(private val dao: ExpenseDao) : ExpenseRepository {
         time = time,
         category = category?.toExpenseCategory(),
         receiver = receiver,
-        props = null
+        type = type,
+        source = source,
+        rawMessage = rawMessage,
+        sender = sender
     )
 
     private fun String.toExpenseCategory(): ExpenseCategory = when (this) {

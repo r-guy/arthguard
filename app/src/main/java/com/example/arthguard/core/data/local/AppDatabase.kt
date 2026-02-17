@@ -9,7 +9,7 @@ import com.example.arthguard.features.dashboard.data.local.BudgetEntity
 import com.example.arthguard.features.dashboard.data.local.ExpenseDao
 import com.example.arthguard.features.dashboard.data.local.ExpenseEntity
 
-@Database(entities = [ExpenseEntity::class, BudgetEntity::class], version = 4)
+@Database(entities = [ExpenseEntity::class, BudgetEntity::class], version = 5)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun expenseDao(): ExpenseDao
     abstract fun budgetDao(): BudgetDao

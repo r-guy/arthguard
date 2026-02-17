@@ -3,7 +3,7 @@ package com.example.arthguard.features.main.presentation.screen
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -16,7 +16,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.arthguard.features.dashboard.presentation.screen.DashboardScreen
-import com.example.arthguard.features.profile.presentation.screen.ProfileScreen
+import com.example.arthguard.features.settings.presentation.screen.SettingsScreen
 
 @Composable
 fun MainScreen(onNavigateToExpenseBreakup: () -> Unit = {}) {
@@ -34,8 +34,8 @@ fun MainScreen(onNavigateToExpenseBreakup: () -> Unit = {}) {
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                    label = { Text("Profile") }
+                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                    label = { Text("Settings") }
                 )
             }
         }
@@ -45,7 +45,7 @@ fun MainScreen(onNavigateToExpenseBreakup: () -> Unit = {}) {
                 modifier = Modifier.padding(bottom = padding.calculateBottomPadding()),
                 onNavigateToExpenseBreakup = onNavigateToExpenseBreakup
             )
-            1 -> ProfileScreen(modifier = Modifier.padding(padding))
+            1 -> SettingsScreen(modifier = Modifier.padding(padding))
         }
     }
 }

@@ -10,5 +10,8 @@ data class ExpenseEntity(
     val time: Long?,
     val category: String?,
     val receiver: String?,
-    val props: String?
+    val type: String = "DEBIT",
+    val source: String = "MANUAL",
+    val rawMessage: String? = null,
+    val sender: String? = null
 )

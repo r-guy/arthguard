@@ -6,8 +6,21 @@ data class ExpenseModel(
     val time: Long? = null,
     val category: ExpenseCategory? = null,
     val receiver: String? = null,
-    val props: Map<String, Any>? = null
+    val type: String = TransactionType.DEBIT,
+    val source: String = TransactionSource.MANUAL,
+    val rawMessage: String? = null,
+    val sender: String? = null
 )
+
+object TransactionType {
+    const val DEBIT = "DEBIT"
+    const val CREDIT = "CREDIT"
+}
+
+object TransactionSource {
+    const val MANUAL = "MANUAL"
+    const val SMS = "SMS"
+}
 
 sealed class ExpenseCategory {
     data object Food : ExpenseCategory()
