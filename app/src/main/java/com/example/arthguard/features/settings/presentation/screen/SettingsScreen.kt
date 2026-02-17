@@ -4,6 +4,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.os.Build
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -195,11 +197,11 @@ private fun saveToDownloads(context: Context, filename: String, content: String,
             )
             file.writeText(content)
         }
-        android.os.Handler(android.os.Looper.getMainLooper()).post {
+        Handler(Looper.getMainLooper()).post {
             Toast.makeText(context, "Exported to Downloads/$filename", Toast.LENGTH_SHORT).show()
         }
     } catch (e: Exception) {
-        android.os.Handler(android.os.Looper.getMainLooper()).post {
+        Handler(Looper.getMainLooper()).post {
             Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
