@@ -10,13 +10,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.example.arthguard.core.data.local.AppDatabase
 import com.example.arthguard.core.navigation.AppNavigation
+import com.example.arthguard.core.util.sms.SmsReader
 import com.example.arthguard.features.dashboard.data.local.ExpenseEntity
-import com.example.arthguard.features.sms_expense.data.SmsReader
 import com.example.arthguard.ui.theme.ArthGuardTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val smsPermissionLauncher = registerForActivityResult(
@@ -56,7 +58,6 @@ class MainActivity : ComponentActivity() {
             val expenses = SmsReader.readPastTransactions(this@MainActivity, daysBack = 360)
             expenses.forEach { expense ->
                 if (expense.rawMessage != null && dao.existsByRawMessage(expense.rawMessage)) return@forEach
-
                 dao.insert(
                     ExpenseEntity(
                         amount = expense.amount,

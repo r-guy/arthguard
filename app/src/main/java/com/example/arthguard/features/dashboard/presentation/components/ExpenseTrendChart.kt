@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -23,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.arthguard.core.util.AppColors
 import com.example.arthguard.features.dashboard.domain.model.ExpenseModel
 import com.example.arthguard.features.dashboard.domain.model.TrendDuration
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
@@ -65,7 +67,10 @@ fun ExpenseTrendChart(
         modelProducer.runTransaction { lineSeries { series(chartValues.ifEmpty { listOf(0.0) }) } }
     }
 
-    Card(modifier = modifier.fillMaxWidth()) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = AppColors.bgSecondary)
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ExposedDropdownMenuBox(

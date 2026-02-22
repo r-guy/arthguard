@@ -1,4 +1,4 @@
-package com.example.arthguard.features.sms_expense.data.parser
+package com.example.arthguard.core.util.sms
 
 import com.example.arthguard.features.dashboard.domain.model.ExpenseModel
 import com.example.arthguard.features.dashboard.domain.model.TransactionSource
@@ -35,9 +35,7 @@ object SmsExpenseParser {
 
     fun parse(sender: String, message: String): ExpenseModel? {
         if (!isTransactionSms(message)) return null
-
         val (amount, type) = extractAmountAndType(message) ?: return null
-
         return ExpenseModel(
             amount = amount,
             type = type,

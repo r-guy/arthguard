@@ -21,6 +21,14 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.FilterList
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -36,13 +44,9 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,19 +54,14 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.arthguard.core.data.local.AppDatabase
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.arthguard.core.util.AppColors
-import com.example.arthguard.core.util.Constants.amountStops
 import com.example.arthguard.core.util.ui.ConfirmDeleteBottomSheet
-import com.example.arthguard.features.dashboard.data.local.ExpenseEntity
-import com.example.arthguard.features.dashboard.data.repository.ExpenseRepositoryImpl
 import com.example.arthguard.features.dashboard.domain.model.ExpenseCategory
 import com.example.arthguard.features.dashboard.domain.model.ExpenseModel
 import com.example.arthguard.features.dashboard.presentation.components.EditExpenseBottomSheet
 import com.example.arthguard.features.expense_breakup.presentation.components.ExpenseFilterBottomSheet
-import com.example.arthguard.features.sms_expense.data.SmsReader
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.example.arthguard.features.expense_breakup.presentation.viewmodel.ExpenseBreakupViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -72,105 +71,54 @@ import java.util.Locale
 @Composable
 fun ExpenseBreakupScreen(
     modifier: Modifier = Modifier,
+    viewModel: ExpenseBreakupViewModel = hiltViewModel(),
     onBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val dao = remember { AppDatabase.getInstance(context).expenseDao() }
-    val repository = remember { ExpenseRepositoryImpl(dao) }
-    val expenses by repository.getAllExpenses().collectAsState(initial = emptyList())
-    val scope = rememberCoroutineScope()
+    val uiState by viewModel.uiState.collectAsState()
 
-    var selectedCategory by remember { mutableStateOf<ExpenseCategory?>(null) }
-    var selectedReceiver by remember { mutableStateOf<String?>(null) }
-    var fromDate by remember { mutableStateOf<Long?>(null) }
-    var toDate by remember { mutableStateOf<Long?>(null) }
-    var amountRange by remember { mutableStateOf(0f..11f) }
-    var showFilterSheet by remember { mutableStateOf(false) }
-    var expenseToEdit by remember { mutableStateOf<ExpenseModel?>(null) }
-    var expenseToDelete by remember { mutableStateOf<ExpenseModel?>(null) }
-    var searchQuery by remember { mutableStateOf("") }
-    var isSearchActive by remember { mutableStateOf(false) }
     val filterSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val editSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val deleteSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val receivers by remember(expenses) {
-        derivedStateOf { expenses.mapNotNull { it.receiver }.distinct() }
-    }
-
-    val filteredExpenses by remember(expenses, selectedCategory, selectedReceiver, fromDate, toDate, amountRange, searchQuery) {
-        derivedStateOf {
-            expenses.filter { expense ->
-                val categoryMatch = selectedCategory == null || expense.category == selectedCategory
-                val receiverMatch = selectedReceiver == null || expense.receiver == selectedReceiver
-                val fromMatch = fromDate == null || (expense.time ?: 0) >= fromDate!!
-                val toMatch = toDate == null || (expense.time ?: 0) <= toDate!!
-                val minAmount = amountStops[amountRange.start.toInt()]
-                val maxAmount = amountStops[amountRange.endInclusive.toInt()]
-                val amountMatch = (expense.amount ?: 0.0) >= minAmount && (expense.amount ?: 0.0) <= maxAmount
-                val searchMatch = searchQuery.isBlank() || 
-                    expense.receiver?.contains(searchQuery, ignoreCase = true) == true ||
-                    expense.category?.let { it::class.simpleName?.contains(searchQuery, ignoreCase = true) } == true ||
-                    expense.amount?.toString()?.contains(searchQuery) == true
-                categoryMatch && receiverMatch && fromMatch && toMatch && amountMatch && searchMatch
-            }
-        }
-    }
-
-    val groupedExpenses by remember(filteredExpenses) {
-        derivedStateOf {
-            filteredExpenses.groupBy { it.category ?: ExpenseCategory.Other }
-        }
-    }
-
     val expandedCategories = remember { mutableStateMapOf<ExpenseCategory, Boolean>() }
-
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(isSearchActive) {
-        if (isSearchActive) {
-            focusRequester.requestFocus()
-        }
+    LaunchedEffect(uiState.isSearchActive) {
+        if (uiState.isSearchActive) focusRequester.requestFocus()
     }
 
     Scaffold(
         modifier = modifier,
         topBar = {
-            if (isSearchActive) {
+            if (uiState.isSearchActive) {
                 SearchBar(
                     inputField = {
                         SearchBarDefaults.InputField(
-                            query = searchQuery,
-                            onQueryChange = { searchQuery = it },
+                            query = uiState.searchQuery,
+                            onQueryChange = { viewModel.setSearchQuery(it) },
                             onSearch = { },
                             expanded = false,
                             onExpandedChange = { },
                             modifier = Modifier.focusRequester(focusRequester),
                             placeholder = { Text("Search expenses...") },
                             leadingIcon = {
-                                IconButton(
-                                    onClick = {
-                                        isSearchActive = false
-                                        searchQuery = ""
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Close search",
-                                    )
+                                IconButton(onClick = { viewModel.setSearchActive(false) }) {
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close search")
                                 }
                             },
                             trailingIcon = {
-                                if (searchQuery.isNotEmpty()) {
+                                if (uiState.searchQuery.isNotEmpty()) {
                                     IconButton(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(size = 64.dp,),)
-                                            .background(color = AppColors.red300,),
-                                        onClick = { searchQuery = "" }
+                                            .clip(RoundedCornerShape(size = 64.dp))
+                                            .background(color = AppColors.red300),
+                                        onClick = { viewModel.setSearchQuery("") }
                                     ) {
                                         Icon(
-                                            Icons.Default.Close,
+                                            Icons.Rounded.Close,
                                             contentDescription = "Clear",
+                                            tint = AppColors.white,
                                         )
                                     }
                                 }
@@ -179,9 +127,7 @@ fun ExpenseBreakupScreen(
                     },
                     expanded = false,
                     onExpandedChange = { },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(all = 8.dp)
+                    modifier = Modifier.fillMaxWidth().padding(all = 8.dp)
                 ) {}
             } else {
                 TopAppBar(
@@ -192,49 +138,31 @@ fun ExpenseBreakupScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = {
-                            scope.launch(Dispatchers.IO) {
-                                val expenses = SmsReader.readPastTransactions(context, daysBack = 360)
-                                expenses.forEach { expense ->
-                                    if (expense.rawMessage != null && dao.existsByRawMessage(expense.rawMessage)) return@forEach
-                                    dao.insert(
-                                        ExpenseEntity(
-                                            amount = expense.amount,
-                                            time = expense.time,
-                                            category = null,
-                                            receiver = expense.receiver,
-                                            type = expense.type,
-                                            source = expense.source,
-                                            rawMessage = expense.rawMessage,
-                                            sender = expense.sender
-                                        )
-                                    )
-                                }
-                            }
-                        }) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        IconButton(onClick = { viewModel.refreshFromSms(context) }) {
+                            Icon(Icons.Rounded.Refresh, contentDescription = "Refresh")
                         }
-                        IconButton(onClick = { showFilterSheet = true }) {
-                            Icon(Icons.Default.FilterList, contentDescription = "Filter")
+                        IconButton(onClick = { viewModel.setShowFilterSheet(true) }) {
+                            Icon(Icons.Rounded.FilterList, contentDescription = "Filter")
                         }
                     }
                 )
             }
         },
         floatingActionButton = {
-            if (!isSearchActive) {
-                FloatingActionButton(onClick = { isSearchActive = true }) {
-                    Icon(Icons.Default.Search, contentDescription = "Search")
+            if (!uiState.isSearchActive) {
+                FloatingActionButton(
+                    containerColor = AppColors.bgTertiary,
+                    onClick = { viewModel.setSearchActive(true) },
+                ) {
+                    Icon(Icons.Rounded.Search, contentDescription = "Search")
                 }
             }
         }
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            modifier = Modifier.fillMaxSize().padding(innerPadding)
         ) {
-            groupedExpenses.forEach { (category, categoryExpenses) ->
+            uiState.groupedExpenses.forEach { (category, categoryExpenses) ->
                 val isExpanded = expandedCategories[category] ?: true
                 val categoryTotal = categoryExpenses.sumOf { it.amount ?: 0.0 }
 
@@ -252,8 +180,8 @@ fun ExpenseBreakupScreen(
                     items(categoryExpenses, key = { it.id ?: it.hashCode() }) { expense ->
                         ExpenseItem(
                             expense = expense,
-                            onEditClick = { expenseToEdit = expense },
-                            onDeleteClick = { expenseToDelete = expense }
+                            onEditClick = { viewModel.setExpenseToEdit(expense) },
+                            onDeleteClick = { viewModel.setExpenseToDelete(expense) }
                         )
                     }
                 }
@@ -261,54 +189,37 @@ fun ExpenseBreakupScreen(
         }
     }
 
-    if (showFilterSheet) {
+    if (uiState.showFilterSheet) {
         ExpenseFilterBottomSheet(
             sheetState = filterSheetState,
-            selectedCategory = selectedCategory,
-            selectedReceiver = selectedReceiver,
-            receivers = receivers,
-            fromDate = fromDate,
-            toDate = toDate,
-            amountRange = amountRange,
-            onCategoryChange = { selectedCategory = it },
-            onReceiverChange = { selectedReceiver = it },
-            onDateRangeChange = { from, to -> fromDate = from; toDate = to },
-            onAmountRangeChange = { amountRange = it },
-            onDismiss = { showFilterSheet = false }
+            selectedCategory = uiState.selectedCategory,
+            selectedReceiver = uiState.selectedReceiver,
+            receivers = uiState.receivers,
+            fromDate = uiState.fromDate,
+            toDate = uiState.toDate,
+            amountRange = uiState.amountRange,
+            onCategoryChange = { viewModel.setSelectedCategory(it) },
+            onReceiverChange = { viewModel.setSelectedReceiver(it) },
+            onDateRangeChange = { from, to -> viewModel.setDateRange(from, to) },
+            onAmountRangeChange = { viewModel.setAmountRange(it) },
+            onDismiss = { viewModel.setShowFilterSheet(false) }
         )
     }
 
-    expenseToEdit?.let { expense ->
+    uiState.expenseToEdit?.let { expense ->
         EditExpenseBottomSheet(
             sheetState = editSheetState,
             expense = expense,
-            onDismiss = { expenseToEdit = null },
-            onUpdate = { updated ->
-                updated.id?.toLongOrNull()?.let { id ->
-                    scope.launch {
-                        dao.update(
-                            id = id,
-                            amount = updated.amount,
-                            receiver = updated.receiver,
-                            category = updated.category?.let { it::class.simpleName }
-                        )
-                    }
-                }
-                expenseToEdit = null
-            }
+            onDismiss = { viewModel.setExpenseToEdit(null) },
+            onUpdate = { viewModel.updateExpense(it) }
         )
     }
 
-    expenseToDelete?.let { expense ->
+    uiState.expenseToDelete?.let { expense ->
         ConfirmDeleteBottomSheet(
             sheetState = deleteSheetState,
-            onDismiss = { expenseToDelete = null },
-            onConfirm = {
-                expense.id?.toLongOrNull()?.let { id ->
-                    scope.launch { dao.delete(id) }
-                }
-                expenseToDelete = null
-            }
+            onDismiss = { viewModel.setExpenseToDelete(null) },
+            onConfirm = { viewModel.deleteExpense(expense) }
         )
     }
 }
@@ -324,7 +235,7 @@ private fun CategoryHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(AppColors.expenseHeader)
+            .background(AppColors.bgSecondary)
             .clickable { onToggle() }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -335,7 +246,7 @@ private fun CategoryHeader(
             Text("$count items • ₹${total.toInt()}", style = MaterialTheme.typography.bodySmall)
         }
         Icon(
-            imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+            imageVector = if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
             contentDescription = if (expanded) "Collapse" else "Expand"
         )
     }
@@ -366,10 +277,10 @@ private fun ExpenseItem(
                     Text(format.format(Date(it)))
                 }
                 IconButton(onClick = onEditClick) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                    Icon(Icons.Rounded.Edit, contentDescription = "Edit")
                 }
                 IconButton(onClick = onDeleteClick) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
                 }
             }
         }

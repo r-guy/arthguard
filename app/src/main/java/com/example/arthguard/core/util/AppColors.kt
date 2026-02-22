@@ -79,5 +79,7 @@ object AppColors {
     val textPrimary = Color(0xFFFFFFFF)
     val textSecondary = Color(0xFFA0A0A0)
     val textInverse = Color(0xFF000000)
-    val bgSecondary = Color(0xFF303030)
+    val bgPrimary = Color(0xFF00262b)
+    val bgSecondary = Color(0xFF004A54)
+    val bgTertiary = Color(0xFF0295A8)
 }

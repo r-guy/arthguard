@@ -1,4 +1,4 @@
-package com.example.arthguard.features.sms_expense.data.receiver
+package com.example.arthguard.core.util.sms
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -6,7 +6,6 @@ import android.content.Intent
 import android.provider.Telephony
 import com.example.arthguard.core.data.local.AppDatabase
 import com.example.arthguard.features.dashboard.data.local.ExpenseEntity
-import com.example.arthguard.features.sms_expense.data.parser.SmsExpenseParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,7 +24,6 @@ class SmsReceiver : BroadcastReceiver() {
         val dao = AppDatabase.getInstance(context).expenseDao()
         CoroutineScope(Dispatchers.IO).launch {
             if (dao.existsByRawMessage(fullMessage)) return@launch
-
             dao.insert(
                 ExpenseEntity(
                     amount = expense.amount,

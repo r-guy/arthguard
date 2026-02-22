@@ -1,9 +1,8 @@
-package com.example.arthguard.features.sms_expense.data
+package com.example.arthguard.core.util.sms
 
 import android.content.Context
 import android.provider.Telephony
 import com.example.arthguard.features.dashboard.domain.model.ExpenseModel
-import com.example.arthguard.features.sms_expense.data.parser.SmsExpenseParser
 
 object SmsReader {
 
@@ -34,7 +33,6 @@ object SmsReader {
                 }
             }
         }
-
         return expenses
     }
 }
