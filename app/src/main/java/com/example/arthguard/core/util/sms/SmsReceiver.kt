@@ -19,7 +19,9 @@ class SmsReceiver : BroadcastReceiver() {
         val fullMessage = messages.joinToString("") { it.messageBody }
         val sender = messages.firstOrNull()?.originatingAddress ?: return
 
-        val expense = SmsExpenseParser.parse(sender, fullMessage) ?: return
+        if (!RegexParser.isTransactionSms(fullMessage)) return
+
+        val expense = MLParser(context).parse(sender, fullMessage) ?: return
 
         val dao = AppDatabase.getInstance(context).expenseDao()
         CoroutineScope(Dispatchers.IO).launch {

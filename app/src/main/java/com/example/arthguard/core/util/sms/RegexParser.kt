@@ -1,16 +1,14 @@
 package com.example.arthguard.core.util.sms
 
-import com.example.arthguard.features.dashboard.domain.model.ExpenseModel
-import com.example.arthguard.features.dashboard.domain.model.TransactionSource
 import com.example.arthguard.features.dashboard.domain.model.TransactionType
 
-object SmsExpenseParser {
+object RegexParser {
 
     private val debitPatterns = listOf(
         Regex("""(?i)debited\s*(?:by\s*)?(?:rs\.?|inr\.?|₹)?\s*([\d,]+\.?\d*)"""),
         Regex("""(?i)(?:rs\.?|inr\.?|₹)\s*([\d,]+\.?\d*)\s*(?:debited|withdrawn)"""),
         Regex("""(?i)spent\s*(?:rs\.?|inr\.?|₹)\s*([\d,]+\.?\d*)"""),
-        Regex("""(?i)payment\s*(?:of\s*)?(?:rs\.?|inr\.?|₹)\s*([\d,]+\.?\d*)"""),
+        Regex("""(?i)(?<!\bnon\s)(?<!\bno\s)(?<!\bfailed\s)(?<!\bpending\s)(?<!\bunsuccessful\s)(?<!\bdeclined\s)(?<!\brejected\s)payment\s*(?:of\s*)?(?:rs\.?|inr\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)"""),
         Regex("""(?i)purchased\s*(?:for\s*)?(?:rs\.?|inr\.?|₹)\s*([\d,]+\.?\d*)"""),
         Regex("""(?i)upi-mandate\s*(?:for\s*)?(?:rs\.?|inr\.?|₹)?\s*([\d,]+\.?\d*)"""),
         Regex("""(?i)(?:rs\.?|inr\.?|₹)\s*([\d,]+\.?\d*)\s*(?:paid|sent|transferred)""")
@@ -23,6 +21,12 @@ object SmsExpenseParser {
         Regex("""(?i)refund\s*(?:of\s*)?(?:rs\.?|inr\.?|₹)\s*([\d,]+\.?\d*)""")
     )
 
+    private val amountPatterns = listOf(
+        Regex("""(?i)(?:rs\.?|inr\.?|₹)\s*([\d,]+\.?\d*)"""),
+        Regex("""(?i)([\d,]+\.?\d*)\s*(?:rs\.?|inr\.?|₹)"""),
+        Regex("""(?i)(?:debited|credited|spent|received|payment|withdrawn|transferred)\s*(?:by\s*)?(?:rs\.?|inr\.?|₹)?\s*([\d,]+\.?\d*)""")
+    )
+
     private val merchantPatterns = listOf(
         Regex("""(?i)towards\s+UPI/\w+/\w+/([^/]+)/"""),
         Regex("""(?i)towards\s+([A-Za-z][A-Za-z0-9\s]*?)(?:\s+from|\s+on|\s+ref|\.|\s*$)"""),
@@ -33,44 +37,33 @@ object SmsExpenseParser {
         Regex("""(?i)to\s+vpa\s+([A-Za-z0-9@._-]+)""")
     )
 
-    fun parse(sender: String, message: String): ExpenseModel? {
-        if (!isTransactionSms(message)) return null
-        val (amount, type) = extractAmountAndType(message) ?: return null
-        return ExpenseModel(
-            amount = amount,
-            type = type,
-            receiver = extractMerchant(message),
-            time = System.currentTimeMillis(),
-            source = TransactionSource.SMS,
-            rawMessage = message,
-            sender = sender
-        )
-    }
-
-    private fun isTransactionSms(message: String): Boolean {
+    fun isTransactionSms(message: String): Boolean {
         val keywords = listOf("debited", "credited", "spent", "received", "payment", "withdrawn", "transferred", "upi", "a/c", "acct", "account")
         return keywords.any { message.contains(it, ignoreCase = true) }
     }
 
-    private fun extractAmountAndType(message: String): Pair<Double, String>? {
+    fun classifyType(message: String): String? {
         for (pattern in debitPatterns) {
-            pattern.find(message)?.groupValues?.get(1)?.let { amountStr ->
-                amountStr.replace(",", "").toDoubleOrNull()?.let {
-                    if (it > 0) return it to TransactionType.DEBIT
-                }
-            }
+            if (pattern.containsMatchIn(message)) return TransactionType.DEBIT
         }
         for (pattern in creditPatterns) {
+            if (pattern.containsMatchIn(message)) return TransactionType.CREDIT
+        }
+        return null
+    }
+
+    fun extractAmount(message: String): Double? {
+        for (pattern in amountPatterns) {
             pattern.find(message)?.groupValues?.get(1)?.let { amountStr ->
                 amountStr.replace(",", "").toDoubleOrNull()?.let {
-                    if (it > 0) return it to TransactionType.CREDIT
+                    if (it > 0) return it
                 }
             }
         }
         return null
     }
 
-    private fun extractMerchant(message: String): String? {
+    fun extractMerchant(message: String): String? {
         for (pattern in merchantPatterns) {
             pattern.find(message)?.groupValues?.get(1)?.trim()?.let {
                 if (it.isNotBlank() && it.length > 1) return it

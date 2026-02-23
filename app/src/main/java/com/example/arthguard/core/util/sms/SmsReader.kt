@@ -9,6 +9,7 @@ object SmsReader {
     fun readPastTransactions(context: Context, daysBack: Int = 30): List<ExpenseModel> {
         val expenses = mutableListOf<ExpenseModel>()
         val cutoffTime = System.currentTimeMillis() - (daysBack * 24 * 60 * 60 * 1000L)
+        val parser = MLParser(context)
 
         val cursor = context.contentResolver.query(
             Telephony.Sms.Inbox.CONTENT_URI,
@@ -26,9 +27,10 @@ object SmsReader {
             while (it.moveToNext()) {
                 val sender = it.getString(addressIdx) ?: continue
                 val body = it.getString(bodyIdx) ?: continue
+                if (!RegexParser.isTransactionSms(body)) continue
                 val date = it.getLong(dateIdx)
 
-                SmsExpenseParser.parse(sender, body)?.copy(time = date)?.let { expense ->
+                parser.parse(sender, body)?.copy(time = date)?.let { expense ->
                     expenses.add(expense)
                 }
             }

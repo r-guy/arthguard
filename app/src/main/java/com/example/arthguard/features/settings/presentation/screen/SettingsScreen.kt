@@ -34,7 +34,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.arthguard.BuildConfig
+import com.example.arthguard.core.util.sms.SmsClassifier
 import com.example.arthguard.features.settings.presentation.viewmodel.SettingsViewModel
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,8 +120,11 @@ private fun SettingsItem(
     subtitle: String,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
     ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier.clickable(
+            onClick = onClick
+        ),
         leadingContent = { Icon(icon, contentDescription = null) },
         headlineContent = { Text(title) },
         supportingContent = { Text(subtitle) }
