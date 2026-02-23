@@ -10,7 +10,7 @@ object SmsExpenseParser {
         Regex("""(?i)debited\s*(?:by\s*)?(?:rs\.?|inr\.?|₹)?\s*([\d,]+\.?\d*)"""),
         Regex("""(?i)(?:rs\.?|inr\.?|₹)\s*([\d,]+\.?\d*)\s*(?:debited|withdrawn)"""),
         Regex("""(?i)spent\s*(?:rs\.?|inr\.?|₹)\s*([\d,]+\.?\d*)"""),
-        Regex("""(?i)payment\s*(?:of\s*)?(?:rs\.?|inr\.?|₹)\s*([\d,]+\.?\d*)"""),
+        Regex("""(?i)(?<!\bnon\s)(?<!\bno\s)(?<!\bfailed\s)(?<!\bpending\s)(?<!\bunsuccessful\s)(?<!\bdeclined\s)(?<!\brejected\s)payment\s*(?:of\s*)?(?:rs\.?|inr\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)"""),
         Regex("""(?i)purchased\s*(?:for\s*)?(?:rs\.?|inr\.?|₹)\s*([\d,]+\.?\d*)"""),
         Regex("""(?i)upi-mandate\s*(?:for\s*)?(?:rs\.?|inr\.?|₹)?\s*([\d,]+\.?\d*)"""),
         Regex("""(?i)(?:rs\.?|inr\.?|₹)\s*([\d,]+\.?\d*)\s*(?:paid|sent|transferred)""")

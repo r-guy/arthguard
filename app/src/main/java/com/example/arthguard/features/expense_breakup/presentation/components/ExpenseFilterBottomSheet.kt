@@ -2,6 +2,8 @@ package com.example.arthguard.features.expense_breakup.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,12 +11,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePickerColors
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.example.arthguard.core.util.AppColors
 import com.example.arthguard.core.util.Constants.amountLabels
@@ -84,7 +91,9 @@ fun ExpenseFilterBottomSheet(
         horizontalPadding = 4.dp,
         content = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text("Filters", style = MaterialTheme.typography.titleMedium.copy(color = AppColors.textPrimary))
@@ -164,10 +173,17 @@ fun ExpenseFilterBottomSheet(
                         state = dateRangeState,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(420.dp),
+                            .clip(RoundedCornerShape(size = 4.dp,),)
+                            .height(200.dp),
                         title = null,
                         headline = null,
-                        showModeToggle = false
+                        showModeToggle = false,
+                        colors = DatePickerDefaults.colors(
+                            containerColor = AppColors.bgPrimary,
+                            todayContentColor = AppColors.blue400,
+                            todayDateBorderColor = AppColors.blue400,
+                            dayInSelectionRangeContainerColor = AppColors.bgTertiary,
+                        ),
                     )
                 }
 
@@ -195,7 +211,10 @@ fun ExpenseFilterBottomSheet(
                         onAmountRangeChange(localAmountRange)
                         onDismiss()
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.elevatedButtonColors(
+                        containerColor = AppColors.white,
+                    )
                 ) {
                     Text("Apply Filters", color = AppColors.textInverse)
                 }
