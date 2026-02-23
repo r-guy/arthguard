@@ -5,13 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.DeleteForever
@@ -22,7 +15,7 @@ import androidx.compose.material.icons.rounded.TableChart
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -31,9 +24,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.arthguard.core.util.AppColors
+import com.example.arthguard.core.util.ui.AppBottomSheet
 import com.example.arthguard.features.settings.presentation.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,6 +40,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val sheetState = rememberModalBottomSheetState()
 
     Scaffold(
         modifier = modifier,
@@ -88,25 +85,28 @@ fun SettingsScreen(
     }
 
     if (uiState.showExportSheet) {
-        ModalBottomSheet(
+        AppBottomSheet(
             onDismissRequest = { viewModel.setShowExportSheet(false) },
-            sheetState = rememberModalBottomSheetState()
-        ) {
-            Column {
-                SettingsItem(
-                    icon = Icons.Rounded.TableChart,
-                    title = "Export as CSV",
-                    subtitle = "Spreadsheet format",
-                    onClick = { viewModel.exportToCsv(context, uiState.expenses) }
-                )
-                SettingsItem(
-                    icon = Icons.Rounded.Code,
-                    title = "Export as JSON",
-                    subtitle = "Developer format",
-                    onClick = { viewModel.exportToJson(context, uiState.expenses) }
-                )
+            sheetState = sheetState,
+            content = {
+                Column {
+                    SettingsItem(
+                        icon = Icons.Rounded.TableChart,
+                        title = "Export as CSV",
+                        subtitle = "Spreadsheet format",
+                        onClick = { viewModel.exportToCsv(context, uiState.expenses) },
+                        bgColor = AppColors.bgSecondary,
+                    )
+                    SettingsItem(
+                        icon = Icons.Rounded.Code,
+                        title = "Export as JSON",
+                        subtitle = "Developer format",
+                        onClick = { viewModel.exportToJson(context, uiState.expenses) },
+                        bgColor = AppColors.bgSecondary,
+                    )
+                }
             }
-        }
+        )
     }
 }
 
@@ -115,10 +115,14 @@ private fun SettingsItem(
     icon: ImageVector,
     title: String,
     subtitle: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    bgColor: Color? = null,
 ) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(
+            containerColor = bgColor ?: AppColors.bgPrimary,
+        ),
         leadingContent = { Icon(icon, contentDescription = null) },
         headlineContent = { Text(title) },
         supportingContent = { Text(subtitle) }
